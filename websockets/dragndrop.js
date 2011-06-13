@@ -24,6 +24,22 @@ function displayImages() {
 $(document).ready(function() {
     resetEvents();
 
+    var socket = new WebSocket("ws://10.21.6.87:8080/team_whatever");
+    socket.onerror = function(error) {
+        console.log("Socket error:", error);
+    }
+    socket.onopen = function(event) {
+        console.log("Socket open:", event);
+    }
+    socket.onmessage = function(event) {
+        var newImage = new Image();
+        newImage.src = JSON.parse(event.data).imageData;
+        $(newImage).bind('load', function() {
+            $(this).appendTo('#recievedImages')
+        });
+        console.log('recieved socket message', event);
+    }
+
     document.addEventListener('drop', function (event) {
         var file = event.dataTransfer.files[0];
 
@@ -38,6 +54,11 @@ $(document).ready(function() {
                 localStorage.setItem('myImages', JSON.stringify(storedImages));
 
                 displayImages();
+                var message = {
+                    from: "David",
+                    imageData: evt.target.result
+                };
+                socket.send(JSON.stringify(message));
             }
         }
         fileReader.readAsDataURL(file);
